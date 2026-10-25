@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { basename, resolve, sep } from "node:path";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 import { standardDanceModelId } from "@/lib/dance/models";
 import { getTemplateById } from "@/lib/dance/templates";
@@ -116,8 +117,23 @@ async function appendDrivingVideo(formData: FormData, templateId: string) {
   }
 
   const videoPath = getPublicAssetPath(template.videoPath);
-  const videoBytes = await readFile(videoPath);
-  const videoBlob = new Blob([videoBytes], { type: "video/mp4" });
+  let assets;
+  try {
+    assets = getCloudflareContext().env.ASSETS;
+  } catch {
+    // The ordinary Next.js development server has no Cloudflare context.
+  }
+
+  let videoBlob: Blob;
+  if (assets) {
+    const response = await assets.fetch(new URL(template.videoPath, "https://assets.internal"));
+    if (!response.ok) {
+      throw new ViggleProviderError("The selected driving video could not be loaded.");
+    }
+    videoBlob = new Blob([await response.arrayBuffer()], { type: "video/mp4" });
+  } else {
+    videoBlob = new Blob([await readFile(videoPath)], { type: "video/mp4" });
+  }
 
   formData.append("driving_video", videoBlob, basename(videoPath));
 }
