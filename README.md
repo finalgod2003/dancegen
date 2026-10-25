@@ -38,6 +38,8 @@ pnpm exec opennextjs-cloudflare deploy
 
 For Cloudflare Workers Git integration, select `finalgod2003/dancegen`, production branch `main`, build command `pnpm build:cloudflare`, and deploy command `pnpm exec opennextjs-cloudflare deploy`. Use Node.js 24 and pnpm 10.33.1. `pnpm preview` runs the built app in the Workers runtime locally.
 
+The build script handles Windows directory links and font paths, and removes bundled environment values so server credentials are supplied only by Worker secrets. Use Node.js 24 or newer on Windows.
+
 Copy the existing production environment settings from Vercel before changing domain routing. Add public `NEXT_PUBLIC_*` values to the Cloudflare build environment; add server-side credentials from `.env.example` as Worker secrets (including the existing `BETTER_AUTH_SECRET`, database, Google OAuth, video provider, and payment credentials). Keep the canonical URL as `https://www.danceclip.org` when moving that domain so existing login and payment callbacks retain their URLs. Never commit secret values. For local Workers preview, use an ignored `.dev.vars` file.
 
 Viggle driving videos are read through the `ASSETS` binding in Workers and from `public/` in ordinary Next.js development. No incremental cache storage is configured because the current app does not use ISR or data-cache revalidation.
